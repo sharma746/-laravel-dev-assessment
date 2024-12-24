@@ -20,4 +20,6 @@ Route::get('/skills', SkillsIndex::class)->name('skills.index');
 // Jobs
 Route::get('/jobs', Index::class)->name('jobs.index');
 Route::get('/jobs/create', Create::class)->name('jobs.create');
+Route::post('/job-postings', [JobPostingsController::class, 'store']);
+
 
