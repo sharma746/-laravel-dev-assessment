@@ -1,7 +1,7 @@
 <?php
-
 namespace App\Livewire\Pages\Jobs;
 
+use App\Models\JobPosting;
 use Livewire\Component;
 
 class Index extends Component
@@ -10,46 +10,54 @@ class Index extends Component
 
     public function mount()
     {
-        $this->jobs = [
-            [
-                "id" => 1,
-                "title" => "Sr. Full Stack Developer",
-                "description" => "You will be responsible for designing, developing, and maintaining robust and scalable web applications from end to end. You must have a deep understanding of both frontend and backend development, thrives in a collaborative environment, and is passionate about delivering high-quality software solutions",
-                "company_name" => "DWebPixel",
-                "company_logo" => asset('logo-3.svg'),
-                "experience" => "4-5 Yrs",
-                "salary" => "$ 4.5-8 Lacs PA",
-                "location" => "Remote",
-                "skills" => [
-                    "Laravel",
-                    "React",
-                    "Vue",
-                    "MySQL",
-                ],
-                "extra" => [
-                    "Remote",
-                    "Full-Time",
-                ]
-            ],
-            [
-                "id" => 2,
-                "title" => "Sr. Frontend Developer",
-                "description" => "You will leverage your expertise in modern frontend technologies and best practices to create exceptional user experiences.",
-                "company_name" => "DWebPixel",
-                "company_logo" => asset('logo-2.svg'),
-                "experience" => "3-4 Yrs",
-                "salary" => "$ 2.5-4 Lacs PA",
-                "location" => "Remote",
-                "skills" => [
-                    "React",
-                    "Vue",
-                ],
-                "extra" => [
-                    "Remote",
-                    "Full-Time",
-                ]
-            ]
-        ];
+        // Fetch all job posts from the database
+        $this->jobs = JobPosting::all()->map(function($job) {
+            return [
+                "id" => $job->id,
+                "title" => $job->title,
+                "description" => $job->description,
+                "company_name" => $job->company_name,
+                // Make sure to correctly handle the logo URL
+                "company_logo" => $job->logo ? asset('storage/'.$job->logo) : null,
+                "experience" => $job->experience,
+                "salary" => $job->salary,
+                "location" => $job->location,
+                // Check if skills is a string before decoding it as JSON
+                "skills" => is_array($job->skills) ? $job->skills : json_decode($job->skills, true),
+                "extra" => is_array($job->extra_info) ? $job->extra_info : json_decode($job->extra_info, true),
+            ];
+        })->toArray(); // Convert the collection to an array
+    }
+
+    // Method to delete a job
+    public function deleteJob($jobId)
+    {
+        // Find the job post by ID
+        $job = JobPosting::find($jobId);
+
+        if ($job) {
+            // Delete the job from the database
+            $job->delete();
+
+            // Optionally, remove it from the jobs array to update the view
+            $this->jobs = JobPosting::all()->map(function($job) {
+                return [
+                    "id" => $job->id,
+                    "title" => $job->title,
+                    "description" => $job->description,
+                    "company_name" => $job->company_name,
+                    "company_logo" => asset($job->company_logo),
+                    "experience" => $job->experience,
+                    "salary" => $job->salary,
+                    "location" => $job->location,
+                    "skills" => json_decode($job->skills, true),
+                    "extra" => json_decode($job->extra_info, true),
+                ];
+            })->toArray();
+
+            // Optionally, you can flash a message for feedback
+            session()->flash('message', 'Job deleted successfully!');
+        }
     }
 
     public function render()
